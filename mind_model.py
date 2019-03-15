@@ -1,7 +1,7 @@
 class Mind:
-    def __init__(self, world):
+    def __init__(self):
         # where resources are
-        self.world = [(4,9), (10,5), (8,10)] # can be initialized, but will just set here
+        self.world = [(10,0), (0,9), (6,10)] # can be initialized, but will just set here
         self.map_length = 15
         self.actual_world = 'ABC'
 
@@ -10,23 +10,26 @@ class Mind:
 
         # belief that the orientation is the above
         self.beliefs = [1/6, 1/6, 1/6, 1/6, 1/6, 1/6]
-        self.intents = {'A': .5,
-                        'B': .5,
-                        'C': .5}
+        self.intents = {'A': 1/3,
+                        'B': 1/3,
+                        'C': 1/3}
         self.transition_matrix = []
         self.prev_position = (0,0)
+        self.position = (0,0)
 
 
     # the entire model pretty much runs here. this calls the other functions
-    def receive_observation(self, direction, x, y):
-        near_locations = within_range((x,y))
+    def receive_observation(self, x, y):
+        self.position = (x,y)
+        near_locations = self.within_range((x,y))
         for loc in near_locations:
             i = self.world.index(loc)
             resource = self.actual_world[i]
-            self.update_beliefs((x,y), resource)
+            point = (x,y)
+            self.update_beliefs(loc, resource)
 
-        # get transition
-        transition = self.get_trasition_matrix(self, position)
+        # update transition
+        self.update_transition_matrix()
 
         # update intents
         self.update_intents()
@@ -35,13 +38,13 @@ class Mind:
 
 
     # gets the probabilities you are looking for resource x at location y based on current position and prev position
-    def get_transition_matrix(self, position):
+    def update_transition_matrix(self):
         dists = []
 
         for resource_pos in self.world:
-            dist1 = self.get_distance(resource_pos, prev_position)
-            dist2 = self.get_distance(resource_pos, position)
-            diff_dist = dist2-dist1
+            dist1 = self.get_distance(resource_pos, self.prev_position)
+            dist2 = self.get_distance(resource_pos, self.position)
+            diff_dist = dist1-dist2
             dists.append(diff_dist)
 
         # -2 2 2  R1 R2 R3
@@ -53,46 +56,47 @@ class Mind:
         range_values = max_value - min_value
 
         # so there are no negatives
-        for d in dists:
-            d += range_values
-
+        # print (dists)
+        for i in range(len(dists)):
+            dists[i] += range_values
+        # print (dists)
+        # print ("------")
         probabilities = []
         for d in dists:
-            probabilities.append(d/sum(d))
+            probabilities.append(d/sum(dists))
 
         self.transition_matrix = probabilities
 
 
     # helper to get distance
     def get_distance(self, p1, p2):
-        return sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
+        return ((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)**.5
 
 
     # helper to get resource locations that can be seen by mark (he can see a resource if
     # he's within the 5 by 5 block where the resource is at the center)
     def within_range(self, position):
         # should return resource positions that are visible from current position
-        resources = []
+        locs = []
         for i in range(len(self.world)):
             loc = self.world[i]
-            resource = self.actual_world[i]
             if abs(position[0]-loc[0])<=5 or abs(position[1]-loc[1]<=5):
-                resources.append(resource)
-        return resources
+                locs.append(loc)
+        return locs
 
 
     # updates belief in the possible arrangements of resources in world
     def update_beliefs(self, position, resource):
         # update beliefs when world becomes discovered
-        i = self.world.index((x,y))
+        i = self.world.index(position)
         increasing_beliefs = []
         decreasing_beliefs = []
-        for i in range(len(self.belief_worlds)):
-            world = self.belief_worlds[i]
+        for j in range(len(self.beliefs_worlds)):
+            world = self.beliefs_worlds[j]
             if world[i] == resource:
-                increasing_beliefs.append(i)
+                increasing_beliefs.append(j)
             else:
-                decreasing_beliefs.append(i)
+                decreasing_beliefs.append(j)
 
         # decrease belief in other worlds by half
         sum_decrease_beliefs = 0
@@ -111,20 +115,69 @@ class Mind:
     def update_intents(self):
         # based on belief, transition, old intents, and rewards
         scores = {'A': 0, 'B': 0, 'C': 0}
-        for i in range(len(belief_worlds)):
-            world = self.belief_worlds[i]
+        for i in range(len(self.beliefs_worlds)):
+            world = self.beliefs_worlds[i]
             belief_prob = self.beliefs[i]
             for i in range(3):
                 resource = world[i]
                 trans_prob = self.transition_matrix[i]
                 score = belief_prob * trans_prob * self.reward(resource)
                 scores[resource] += score
+        # print (scores)
+
+        sum_scores = scores['A'] + scores['B'] + scores['C']
+
+        new_intents = {}
+        for s in scores:
+            new_intents[s] = scores[s] / sum_scores
+
+        self.intents = new_intents
 
 
     # reward function that gives reward for pretty much just collecting since
     # we took off 'marking' locations for later
     def reward(self, resource):
-        return 100 * self.intents[resource][0]
+        return 100 * self.intents[resource]
 
 
     # later: visualizationy stuffz
+
+my_mind = Mind()
+
+# goes to A, then C
+# print (my_mind.intents)
+# my_mind.receive_observation(1, 0)
+# print (my_mind.intents)
+# my_mind.receive_observation(2, 0)
+# print (my_mind.intents)
+# my_mind.receive_observation(3, 0)
+# print (my_mind.intents)
+# my_mind.receive_observation(4, 0)
+# my_mind.receive_observation(5, 0)
+# my_mind.receive_observation(6, 0)
+# my_mind.receive_observation(6, 1)
+# print (my_mind.intents)
+# my_mind.receive_observation(6, 2)
+# my_mind.receive_observation(6, 3)
+# my_mind.receive_observation(6, 4)
+# print (my_mind.intents)
+
+# goes to A but changes mind
+print (my_mind.intents)
+my_mind.receive_observation(1, 0)
+print (my_mind.intents)
+my_mind.receive_observation(2, 0)
+print (my_mind.intents)
+my_mind.receive_observation(3, 0)
+print (my_mind.intents)
+my_mind.receive_observation(4, 0)
+my_mind.receive_observation(5, 0)
+my_mind.receive_observation(6, 0)
+print (my_mind.intents)
+my_mind.receive_observation(5, 0)
+print (my_mind.intents)
+my_mind.receive_observation(4, 0)
+my_mind.receive_observation(3, 0)
+print (my_mind.intents)
+
+print ("done")
