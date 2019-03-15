@@ -18,17 +18,18 @@ class Mind:
 
 
     # the entire model pretty much runs here. this calls the other functions
-    def receive_observation(self, direction, x, y, action):
-        if (x,y) in self.world:
-            i = self.world.index((x,y))
+    def receive_observation(self, direction, x, y):
+        near_locations = within_range((x,y))
+        for loc in near_locations:
+            i = self.world.index(loc)
             resource = self.actual_world[i]
             self.update_beliefs((x,y), resource)
 
         # get transition
-        transition = get_trasition_matrix(self, position)
+        transition = self.get_trasition_matrix(self, position)
 
         # update intents
-        # TODO
+        self.update_intents()
 
         self.prev_position = (x,y)
 
@@ -43,6 +44,10 @@ class Mind:
             diff_dist = dist2-dist1
             dists.append(diff_dist)
 
+        # -2 2 2  R1 R2 R3
+        # 2, 6, 6
+        # 2/14, 6/14, 6/14
+
         max_value = max(dists)
         min_value = min(dists)
         range_values = max_value - min_value
@@ -55,7 +60,7 @@ class Mind:
         for d in dists:
             probabilities.append(d/sum(d))
 
-        return probabilities
+        self.transition_matrix = probabilities
 
 
     # helper to get distance
@@ -63,7 +68,7 @@ class Mind:
         return sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
 
 
-    # helper to get resources that can be seen by mark (he can see a resource if
+    # helper to get resource locations that can be seen by mark (he can see a resource if
     # he's within the 5 by 5 block where the resource is at the center)
     def within_range(self, position):
         # should return resource positions that are visible from current position
@@ -102,11 +107,18 @@ class Mind:
             self.beliefs[b] += increasing_each
 
 
-    # updates intents... the final thing we want to get
+    # updates intents
     def update_intents(self):
         # based on belief, transition, old intents, and rewards
-        # TODO get scores based on all beliefs...
-        # resource with higher scores --> higher probabilities in intent
+        scores = {'A': 0, 'B': 0, 'C': 0}
+        for i in range(len(belief_worlds)):
+            world = self.belief_worlds[i]
+            belief_prob = self.beliefs[i]
+            for i in range(3):
+                resource = world[i]
+                trans_prob = self.transition_matrix[i]
+                score = belief_prob * trans_prob * self.reward(resource)
+                scores[resource] += score
 
 
     # reward function that gives reward for pretty much just collecting since
