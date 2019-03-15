@@ -22,6 +22,9 @@ class Mind:
     def receive_observation(self, x, y):
         self.position = (x,y)
         near_locations = self.within_range((x,y))
+        print ("LOC")
+        print ((x,y))
+        print (near_locations)
         for loc in near_locations:
             i = self.world.index(loc)
             resource = self.actual_world[i]
@@ -80,7 +83,12 @@ class Mind:
         locs = []
         for i in range(len(self.world)):
             loc = self.world[i]
-            if abs(position[0]-loc[0])<=5 or abs(position[1]-loc[1]<=5):
+            # print ("---")
+            # print (position)
+            # print (loc)
+            # print (abs(position[0]-loc[0])<=5)
+            # print ("---")
+            if abs(position[0]-loc[0])<=5 and abs(position[1]-loc[1])<=5:
                 locs.append(loc)
         return locs
 
@@ -153,8 +161,12 @@ my_mind = Mind()
 # my_mind.receive_observation(3, 0)
 # print (my_mind.intents)
 # my_mind.receive_observation(4, 0)
+# print (my_mind.intents)
 # my_mind.receive_observation(5, 0)
 # my_mind.receive_observation(6, 0)
+# # my_mind.receive_observation(7, 0)
+# # my_mind.receive_observation(8, 0)
+# print (my_mind.intents)
 # my_mind.receive_observation(6, 1)
 # print (my_mind.intents)
 # my_mind.receive_observation(6, 2)
