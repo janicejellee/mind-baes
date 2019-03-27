@@ -106,7 +106,7 @@ class Mind:
 
     # updates intents, softmax function on Q^LA, the state-action value function
     def update_intents(self):
-        sa_values = {'A': 0, 'B': 0, 'C': 0}
+        QLA_values = {'A': 0, 'B': 0, 'C': 0}
         value_function = self.value()
         for i in range(len(self.beliefs_worlds)):
             world = self.beliefs_worlds[i]
@@ -114,9 +114,9 @@ class Mind:
             for i in range(3):
                 resource = world[i]
                 score = belief_prob * self.state_transitional_prob * (self.reward(resource) + value_function[i])
-                sa_values[resource] += score
+                QLA_values[resource] += score
 
-        values = [sa_values['A'], sa_values['B'], sa_values['C']]
+        values = [QLA_values['A'], QLA_values['B'], QLA_values['C']]
         values_softmax = self.softmax(values)
 
         new_intents = {'A': values_softmax[0], 'B': values_softmax[1], 'C': values_softmax[2]}
