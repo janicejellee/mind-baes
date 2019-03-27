@@ -131,7 +131,18 @@ class Mind:
                 trans_prob = self.transition_matrix[i]
                 score = belief_prob * trans_prob * self.reward(resource)
                 scores[resource] += score
-        # print (scores)
+
+        scores_list = []
+        for i in scores:
+            scores_list.append(scores[i])
+
+
+        max_score = max(scores_list)
+        min_score = min(scores_list)
+        range_values = max_score - min_score
+
+        for i in scores:
+            scores[i] += range_values
 
         sum_scores = scores['A'] + scores['B'] + scores['C']
 
@@ -153,28 +164,28 @@ class Mind:
 my_mind = Mind()
 
 # goes to A, then C
-print (my_mind.intents)
-my_mind.receive_observation(1, 0)
-print (my_mind.intents)
-my_mind.receive_observation(2, 0)
-print (my_mind.intents)
-my_mind.receive_observation(3, 0)
-print (my_mind.intents)
-my_mind.receive_observation(4, 0)
-print (my_mind.intents)
-my_mind.receive_observation(5, 0)
-my_mind.receive_observation(6, 0)
-# my_mind.receive_observation(7, 0)
-# my_mind.receive_observation(8, 0)
-print (my_mind.intents)
-my_mind.receive_observation(6, 1)
-print (my_mind.intents)
-my_mind.receive_observation(6, 2)
-my_mind.receive_observation(6, 3)
-my_mind.receive_observation(6, 4)
-my_mind.receive_observation(6, 5)
-my_mind.receive_observation(6, 6)
-print (my_mind.intents)
+# print (my_mind.intents)
+# my_mind.receive_observation(1, 0)
+# print (my_mind.intents)
+# my_mind.receive_observation(2, 0)
+# print (my_mind.intents)
+# my_mind.receive_observation(3, 0)
+# print (my_mind.intents)
+# my_mind.receive_observation(4, 0)
+# print (my_mind.intents)
+# my_mind.receive_observation(5, 0)
+# my_mind.receive_observation(6, 0)
+# # my_mind.receive_observation(7, 0)
+# # my_mind.receive_observation(8, 0)
+# print (my_mind.intents)
+# my_mind.receive_observation(6, 1)
+# print (my_mind.intents)
+# my_mind.receive_observation(6, 2)
+# my_mind.receive_observation(6, 3)
+# my_mind.receive_observation(6, 4)
+# my_mind.receive_observation(6, 5)
+# my_mind.receive_observation(6, 6)
+# print (my_mind.intents)
 
 # goes to A but changes mind
 # print (my_mind.intents)
@@ -193,5 +204,24 @@ print (my_mind.intents)
 # my_mind.receive_observation(4, 0)
 # my_mind.receive_observation(3, 0)
 # print (my_mind.intents)
+
+my_mind = Mind()
+my_mind.receive_observation(1, 0)
+print (my_mind.intents)
+my_mind.receive_observation(2, 0)
+print (my_mind.intents)
+my_mind.receive_observation(3, 0)
+print (my_mind.intents)
+my_mind.receive_observation(4, 0)
+print (my_mind.intents)
+my_mind.receive_observation(5, 0)
+print (my_mind.intents)
+my_mind.receive_observation(6, 0)
+print (my_mind.intents)
+my_mind.receive_observation(5, 0)
+print (my_mind.intents)
+my_mind.receive_observation(4, 0)
+print (my_mind.intents)
+my_mind.receive_observation(3, 0)
 
 print ("done")
