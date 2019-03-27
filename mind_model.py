@@ -136,13 +136,13 @@ class Mind:
         for i in scores:
             scores_list.append(scores[i])
 
-
-        max_score = max(scores_list)
-        min_score = min(scores_list)
-        range_values = max_score - min_score
-
-        for i in scores:
-            scores[i] += range_values
+        #
+        # max_score = max(scores_list)
+        # min_score = min(scores_list)
+        # range_values = max_score - min_score
+        #
+        # for i in scores:
+        #     scores[i] += range_values
 
         sum_scores = scores['A'] + scores['B'] + scores['C']
 
@@ -223,5 +223,9 @@ print (my_mind.intents)
 my_mind.receive_observation(4, 0)
 print (my_mind.intents)
 my_mind.receive_observation(3, 0)
+# from nose.tools import assert_equal
+# assert_equal(abs(my_mind.intents['A'] - 0.035648663780556554) < 0.001, True)
+# assert_equal(abs(my_mind.intents['B'] - 0.48217566810972184) < 0.001, True)
+# assert_equal(abs(my_mind.intents['C'] - 0.48217566810972157) < 0.001, True)
 
 print ("done")
