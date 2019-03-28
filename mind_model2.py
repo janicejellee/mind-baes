@@ -113,7 +113,7 @@ class Mind:
             belief_prob = self.beliefs[i]
             for i in range(3):
                 resource = world[i]
-                score = belief_prob * self.state_transitional_prob * (self.reward(resource) + value_function[i])
+                score = belief_prob * self.state_transitional_prob * (self.reward() + 5 * self.intents[resource] * value_function[i])
                 QLA_values[resource] += score
 
         values = [QLA_values['A'], QLA_values['B'], QLA_values['C']]
@@ -123,10 +123,12 @@ class Mind:
         self.intents = new_intents
 
 
-    # reward function that gives reward for pretty much just collecting since
-    def reward(self, resource):
-        return 1 * self.intents[resource]
-
+    # reward function, get reward for reaching a resource location, cost for other states
+    def reward(self):
+        if self.position in self.world_loc:
+            return 10
+        else:
+            return -1
 
 my_mind = Mind()
 
