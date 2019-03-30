@@ -190,4 +190,6 @@ class Mind:
 
     def receive_observation(self, action):
         "Receive observation and get updated intents."
-        # TODO run everything, print out intents
+        # TODO run one round
+
+# TODO test situations, similary to older versions...
