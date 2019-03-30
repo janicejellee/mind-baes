@@ -166,7 +166,7 @@ class Mind:
             U = U1.copy()
             delta = 0
             for w_i in range(len(self.beliefs_worlds)):
-                for s in self.states:
+                for s in next_states:
                     U1[s] = R(s, self.beliefs_worlds[w_i]) + gamma * max([sum([self.beliefs[w_i] * p * U[s1] for (p, s1) in T(s, a)])
                                                 for a in self.actions(s)])
                     delta = max(delta, abs(U1[s] - U[s]))
