@@ -30,10 +30,12 @@ class Mind:
 
         self.gamma = 0.9
 
-    def reward(self, state):
+    def reward(self, state, world):
         "Return a numeric reward for this state."
         if (state in self.world_loc):
-            return 10
+            i = self.world_loc.index(state)
+            resource = world[i]
+            return 10*self.intents[i]
         else:
             return -1
 
@@ -150,7 +152,7 @@ class Mind:
 
     def value_iteration(self, state, epsilon=0.001):
         "Solving by value iteration."
-        # TODO add beliefs part of equation into this
+        # TODO check that beliefs part of eqn was added correctly?
 
         actions = self.actions(state)
         next_states = []
@@ -163,10 +165,11 @@ class Mind:
         while True:
             U = U1.copy()
             delta = 0
-            for s in self.states:
-                U1[s] = R(s) + gamma * max([sum([p * U[s1] for (p, s1) in T(s, a)])
-                                            for a in self.actions(s)])
-                delta = max(delta, abs(U1[s] - U[s]))
+            for w_i in range(len(self.beliefs_worlds)):
+                for s in self.states:
+                    U1[s] = R(s, self.beliefs_worlds[w_i]) + gamma * max([sum([self.beliefs[w_i] * p * U[s1] for (p, s1) in T(s, a)])
+                                                for a in self.actions(s)])
+                    delta = max(delta, abs(U1[s] - U[s]))
             if delta < epsilon * (1 - gamma) / gamma:
                  return U
 
