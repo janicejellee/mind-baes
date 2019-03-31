@@ -18,14 +18,13 @@ class Mind:
 
         # how certain we are of current state
         epsilon_obs = 0.001
-        self.observation_distribution_prob = 1 - episilon_obs
+        self.observation_distribution_prob = 1 - epsilon_obs
 
-        self.prev_state = (0,0)
         self.state = (0,0)
 
         self.states = []
-        for i in range(len(self.map_length)):
-            for j in range(len(self.map_length)):
+        for i in range(self.map_length):
+            for j in range(self.map_length):
                 self.states.append((i,j))
 
         self.gamma = 0.9
@@ -35,11 +34,11 @@ class Mind:
         if (state in self.world_loc):
             i = self.world_loc.index(state)
             resource = world[i]
-            return 10*self.intents[i]
+            return 10*self.intents[resource]
         else:
             return -1
 
-    def get_next_state(state, action):
+    def get_next_state(self, state, action):
         """
         Helper function. Given state and action, gives next state that would
         be reached. Returns None if off map.
@@ -63,7 +62,7 @@ class Mind:
 
         return next_state
 
-    def transition(state, action):
+    def transition(self, state, action):
         """
         Transition model.  From a state and an action, return a list
         of (result-state, probability) pairs.
@@ -78,7 +77,7 @@ class Mind:
         y = state[1]
 
         if next_state:
-            pairs.append(next_state, 0.9)
+            pairs.append((next_state, 0.9))
             remaining = len(actions) - 1
             prob = 0.1 / remaining
             for a in actions:
@@ -88,6 +87,8 @@ class Mind:
             prob = 1.0 / len(actions)
             for a in actions:
                 pairs.append((self.get_next_state(state, a), prob))
+
+        # print (pairs)
         return pairs
 
     def actions(self, state):
@@ -120,7 +121,7 @@ class Mind:
                 locs.append(loc)
         return locs
 
-    def beliefs(self, state):
+    def beliefs_update(self, state):
         "Update beliefs"
         near_locations = self.within_range(state)
         for loc in near_locations:
@@ -128,27 +129,26 @@ class Mind:
             resource = self.world_state[i]
             point = (x,y)
 
-        i = self.world_loc.index(state)
-        increasing_beliefs = []
-        decreasing_beliefs = []
-        for j in range(len(self.beliefs_worlds)):
-            world = self.beliefs_worlds[j]
-            if world[i] == resource:
-                increasing_beliefs.append(j)
-            else:
-                decreasing_beliefs.append(j)
+            increasing_beliefs = []
+            decreasing_beliefs = []
+            for j in range(len(self.beliefs_worlds)):
+                world = self.beliefs_worlds[j]
+                if world[i] == resource:
+                    increasing_beliefs.append(j)
+                else:
+                    decreasing_beliefs.append(j)
 
-        # decrease belief in other worlds by half
-        sum_decrease_beliefs = 0
-        for b in decreasing_beliefs:
-            self.beliefs[b] /= 2
-            sum_decrease_beliefs += self.beliefs[b]
+            # decrease belief in other worlds by half
+            sum_decrease_beliefs = 0
+            for b in decreasing_beliefs:
+                self.beliefs[b] /= 2
+                sum_decrease_beliefs += self.beliefs[b]
 
-        # increase belief in that world by w/e leftover
-        leftover = 1-sum_decrease_beliefs
-        increasing_each = leftover / len(increasing_beliefs)
-        for b in increasing_beliefs:
-            self.beliefs[b] += increasing_each
+            # increase belief in that world by w/e leftover
+            leftover = 1-sum_decrease_beliefs
+            increasing_each = leftover / len(increasing_beliefs)
+            for b in increasing_beliefs:
+                self.beliefs[b] += increasing_each
 
     def value_iteration(self, state, epsilon=0.001):
         "Solving by value iteration."
@@ -156,18 +156,19 @@ class Mind:
 
         actions = self.actions(state)
         next_states = []
-            for a in actions:
-                next_states.append(self.get_next_state(state, a))
+        for a in actions:
+            next_states.append(self.get_next_state(state, a))
 
-        U1 = dict([(s, 0) for s in next_states])
-        R, T, gamma = self.R, self.T, self.gamma
+        U1 = dict([(s, 0) for s in self.states])
+        R, T, gamma = self.reward, self.transition, self.gamma
 
         while True:
             U = U1.copy()
             delta = 0
             for w_i in range(len(self.beliefs_worlds)):
-                for s in next_states:
-                    U1[s] = R(s, self.beliefs_worlds[w_i]) + gamma * max([sum([self.beliefs[w_i] * p * U[s1] for (p, s1) in T(s, a)])
+                for s in self.states:
+                    # self.beliefs[w_i] *
+                    U1[s] = R(s, self.beliefs_worlds[w_i]) + gamma * max([sum([p * U[s1] for (s1, p) in T(s, a)])
                                                 for a in self.actions(s)])
                     delta = max(delta, abs(U1[s] - U[s]))
             if delta < epsilon * (1 - gamma) / gamma:
@@ -180,19 +181,41 @@ class Mind:
         """
         pi = {}
         for s in self.states:
-            pi[s] = argmax(self.actions(s), lambda a:self.expected_utility(a, s, U))
+            pi[s] = self.argmax(self.actions(s), lambda a:self.expected_utility(a, s, U))
         return pi
+
+    def argmax(self, keys, f):
+        "Helper function to get argmax."
+        return max(keys, key=f)
 
     def expected_utility(self, action, state, U):
         "The expected utility of doing a in state s, according to the MDP and U."
-        return sum([p * U[s1] for (p, s1) in self.T(state, action)])
+        return sum([p * U[s1] for (s1, p) in self.transition(state, action)])
 
-    def intents(self):
+    def intents_update(self, policy):
         "Update intents."
         # TODO get intents based on the best policy?
 
     def receive_observation(self, action):
         "Receive observation and get updated intents."
-        # TODO run one round
+        self.state = self.get_next_state(self.state, action)
+        self.beliefs_update(self.state)
+        U = self.value_iteration(self.state)
+        policy = self.best_policy(U)
+        print (policy)
+        # self.intents_update(policy)
+        # print (self.intents)
 
-# TODO test situations, similary to older versions...
+# testing
+# goes to A but changes mind
+my_mind = Mind()
+my_mind.receive_observation('right')
+my_mind.receive_observation('right')
+# my_mind.receive_observation('right')
+# my_mind.receive_observation('right')
+# my_mind.receive_observation('right')
+# my_mind.receive_observation('right')
+# my_mind.receive_observation('left')
+# my_mind.receive_observation('left')
+
+print ("done")
