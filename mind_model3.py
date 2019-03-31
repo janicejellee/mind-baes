@@ -127,7 +127,6 @@ class Mind:
         for loc in near_locations:
             i = self.world_loc.index(loc)
             resource = self.world_state[i]
-            point = (x,y)
 
             increasing_beliefs = []
             decreasing_beliefs = []
@@ -149,6 +148,7 @@ class Mind:
             increasing_each = leftover / len(increasing_beliefs)
             for b in increasing_beliefs:
                 self.beliefs[b] += increasing_each
+        self.beliefs = self.softmax(self.beliefs)
 
     def value_iteration(self, state, epsilon=0.001):
         "Solving by value iteration."
@@ -162,23 +162,25 @@ class Mind:
         U1 = dict([(s, 0) for s in self.states])
         R, T, gamma = self.reward, self.transition, self.gamma
 
-        while True:
+        for i in range(5):
             U = U1.copy()
             delta = 0
             for w_i in range(len(self.beliefs_worlds)):
                 for s in self.states:
                     # self.beliefs[w_i] *
-                    U1[s] = R(s, self.beliefs_worlds[w_i]) + gamma * max([sum([p * U[s1] for (s1, p) in T(s, a)])
+                    U1[s] = R(s, self.beliefs_worlds[w_i]) + gamma * max([sum([self.beliefs[w_i] * p * U[s1] for (s1, p) in T(s, a)])
                                                 for a in self.actions(s)])
                     delta = max(delta, abs(U1[s] - U[s]))
             if delta < epsilon * (1 - gamma) / gamma:
                  return U
+        return U
 
     def best_policy(self, U):
         """
         Given an MDP and a utility function U, determine the best policy,
         as a mapping from state to action.
         """
+        print ("policyy")
         pi = {}
         for s in self.states:
             pi[s] = self.argmax(self.actions(s), lambda a:self.expected_utility(a, s, U))
@@ -192,9 +194,54 @@ class Mind:
         "The expected utility of doing a in state s, according to the MDP and U."
         return sum([p * U[s1] for (s1, p) in self.transition(state, action)])
 
+    def get_distance(self, p1, p2):
+        "Helper to get distance."
+        return ((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)**.5
+
+    def softmax(self, inputs):
+        "Helper to softmax."
+        exps = [math.exp(i) for i in inputs]
+        sum_of_exps = sum(exps)
+        softmax = [j/sum_of_exps for j in exps]
+        return softmax
+
     def intents_update(self, policy):
         "Update intents."
         # TODO get intents based on the best policy?
+        best_action = policy[self.state]
+        next_state = self.get_next_state(self.state, best_action)
+
+        dists = []
+
+        for resource_pos in self.world_loc:
+            dist1 = self.get_distance(resource_pos, self.state)
+            dist2 = self.get_distance(resource_pos, next_state)
+            diff_dist = dist1-dist2
+            dists.append(diff_dist)
+
+        dists = self.softmax(dists)
+
+        # probabilities A,B,C is in location 0,1,2
+        probs = [{'A': 0, 'B': 0, 'C': 0},
+                 {'A': 0, 'B': 0, 'C': 0},
+                 {'A': 0, 'B': 0, 'C': 0}]
+
+        for i in range(len(self.beliefs_worlds)):
+            world = self.beliefs_worlds[i]
+            for j in range(3):
+                resource = world[j]
+                probs[j][resource] += self.beliefs[i]
+
+        scores = [0, 0, 0]
+        for i in range(3):
+            prob = probs[i]
+            scores[0] += dists[i] * prob['A']
+            scores[1] += dists[i] * prob['B']
+            scores[2] += dists[i] * prob['C']
+
+        softmax = self.softmax(scores)
+        self.intents = {'A': softmax[0], 'B': softmax[1], 'C': softmax[2]}
+
 
     def receive_observation(self, action):
         "Receive observation and get updated intents."
@@ -202,20 +249,25 @@ class Mind:
         self.beliefs_update(self.state)
         U = self.value_iteration(self.state)
         policy = self.best_policy(U)
-        print (policy)
-        # self.intents_update(policy)
-        # print (self.intents)
+        # print (policy)
+        self.intents_update(policy)
+        print ("------")
+        print (self.beliefs)
+        print (self.intents)
 
 # testing
 # goes to A but changes mind
 my_mind = Mind()
 my_mind.receive_observation('right')
 my_mind.receive_observation('right')
-# my_mind.receive_observation('right')
-# my_mind.receive_observation('right')
-# my_mind.receive_observation('right')
-# my_mind.receive_observation('right')
-# my_mind.receive_observation('left')
-# my_mind.receive_observation('left')
+my_mind.receive_observation('right')
+my_mind.receive_observation('right')
+my_mind.receive_observation('right')
+my_mind.receive_observation('right')
+my_mind.receive_observation('left')
+my_mind.receive_observation('left')
+my_mind.receive_observation('left')
+my_mind.receive_observation('left')
+my_mind.receive_observation('left')
 
 print ("done")
