@@ -53,10 +53,10 @@ class Mind:
         elif action == 'left':
             if 0<=(x-1)<self.map_length and 0<=y<self.map_length:
                 next_state = (x-1,y)
-        elif action == 'down':
+        elif action == 'up':
             if 0<=x<self.map_length and 0<=(y-1)<self.map_length:
                 next_state = (x,y-1)
-        elif action == 'up':
+        elif action == 'down':
             if 0<=x<self.map_length and 0<=(y+1)<self.map_length:
                 next_state = (x,y+1)
 
@@ -102,9 +102,9 @@ class Mind:
         if 0<=(x-1)<self.map_length and 0<=y<self.map_length:
             actions.append('left')
         if 0<=x<self.map_length and 0<=(y-1)<self.map_length:
-            actions.append('down')
-        if 0<=x<self.map_length and 0<=(y+1)<self.map_length:
             actions.append('up')
+        if 0<=x<self.map_length and 0<=(y+1)<self.map_length:
+            actions.append('down')
 
         return actions
 
