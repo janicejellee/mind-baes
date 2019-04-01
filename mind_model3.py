@@ -12,10 +12,13 @@ class Mind:
         # belief that the orientation is the above
         self.beliefs = [1/6, 1/6, 1/6, 1/6, 1/6, 1/6]
 
-        self.intents = {'A': 1/3,
-                        'B': 1/3,
-                        'C': 1/3}
+        # self.intents = {'A': 1/3,
+        #                 'B': 1/3,
+        #                 'C': 1/3}
 
+        self.intents = {'A': 0.05,
+                        'B': 0.09,
+                        'C': 0.05}
         # how certain we are of current state
         epsilon_obs = 0.001
         self.observation_distribution_prob = 1 - epsilon_obs
@@ -137,18 +140,18 @@ class Mind:
                 else:
                     decreasing_beliefs.append(j)
 
-            # decrease belief in other worlds by half
-            sum_decrease_beliefs = 0
-            for b in decreasing_beliefs:
-                self.beliefs[b] /= 2
-                sum_decrease_beliefs += self.beliefs[b]
-
-            # increase belief in that world by w/e leftover
-            leftover = 1-sum_decrease_beliefs
-            increasing_each = leftover / len(increasing_beliefs)
+            # increase belief in worlds
+            sum_increase_beliefs = 0
             for b in increasing_beliefs:
-                self.beliefs[b] += increasing_each
-        self.beliefs = self.softmax(self.beliefs)
+                self.beliefs[b] *= 2
+                sum_increase_beliefs += self.beliefs[b]
+            # print ("increasing ", increasing_beliefs)
+
+        new_beliefs = []
+        for b in self.beliefs:
+            new_beliefs.append(b/sum(self.beliefs))
+
+        self.beliefs = new_beliefs
 
     def value_iteration(self, state, epsilon=0.001):
         "Solving by value iteration."
@@ -162,7 +165,7 @@ class Mind:
         U1 = dict([(s, 0) for s in self.states])
         R, T, gamma = self.reward, self.transition, self.gamma
 
-        for i in range(5):
+        for i in range(10):
             U = U1.copy()
             delta = 0
             for w_i in range(len(self.beliefs_worlds)):
@@ -180,7 +183,6 @@ class Mind:
         Given an MDP and a utility function U, determine the best policy,
         as a mapping from state to action.
         """
-        print ("policyy")
         pi = {}
         for s in self.states:
             pi[s] = self.argmax(self.actions(s), lambda a:self.expected_utility(a, s, U))
@@ -209,6 +211,7 @@ class Mind:
         "Update intents."
         # TODO get intents based on the best policy?
         best_action = policy[self.state]
+        print (best_action)
         next_state = self.get_next_state(self.state, best_action)
 
         dists = []
@@ -218,8 +221,13 @@ class Mind:
             dist2 = self.get_distance(resource_pos, next_state)
             diff_dist = dist1-dist2
             dists.append(diff_dist)
+        print (dists)
+        max_value = max(dists)
+        min_value = min(dists)
+        range_values = max_value - min_value
 
-        dists = self.softmax(dists)
+        for i in range(len(dists)):
+            dists[i] += range_values
 
         # probabilities A,B,C is in location 0,1,2
         probs = [{'A': 0, 'B': 0, 'C': 0},
@@ -238,22 +246,21 @@ class Mind:
             scores[0] += dists[i] * prob['A']
             scores[1] += dists[i] * prob['B']
             scores[2] += dists[i] * prob['C']
-
-        softmax = self.softmax(scores)
-        self.intents = {'A': softmax[0], 'B': softmax[1], 'C': softmax[2]}
-
+        self.intents = {'A': scores[0]/sum(scores), 'B': scores[1]/sum(scores), 'C': scores[2]/sum(scores)}
 
     def receive_observation(self, action):
         "Receive observation and get updated intents."
+        print ("------")
         self.state = self.get_next_state(self.state, action)
         self.beliefs_update(self.state)
         U = self.value_iteration(self.state)
         policy = self.best_policy(U)
+        print (self.state)
         # print (policy)
         self.intents_update(policy)
-        print ("------")
-        print (self.beliefs)
-        print (self.intents)
+        # print ('beliefs: ', self.beliefs)
+        print ('intents: ', self.intents)
+
 
 # testing
 # goes to A but changes mind
@@ -269,5 +276,22 @@ my_mind.receive_observation('left')
 my_mind.receive_observation('left')
 my_mind.receive_observation('left')
 my_mind.receive_observation('left')
+
+
+# goes to A, then C
+# my_mind.receive_observation('right')
+# my_mind.receive_observation('right')
+# my_mind.receive_observation('right')
+# my_mind.receive_observation('right')
+# my_mind.receive_observation('right')
+# my_mind.receive_observation('right')
+# my_mind.receive_observation('down')
+# my_mind.receive_observation('down')
+# my_mind.receive_observation('down')
+# my_mind.receive_observation('down')
+# my_mind.receive_observation('down')
+# my_mind.receive_observation('down')
+# my_mind.receive_observation('down')
+# my_mind.receive_observation('down')
 
 print ("done")
