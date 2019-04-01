@@ -153,14 +153,9 @@ class Mind:
 
         self.beliefs = new_beliefs
 
-    def value_iteration(self, state, epsilon=0.001):
+    def value_iteration(self, epsilon=0.001):
         "Solving by value iteration."
         # TODO check that beliefs part of eqn was added correctly?
-
-        actions = self.actions(state)
-        next_states = []
-        for a in actions:
-            next_states.append(self.get_next_state(state, a))
 
         U1 = dict([(s, 0) for s in self.states])
         R, T, gamma = self.reward, self.transition, self.gamma
@@ -221,7 +216,7 @@ class Mind:
             dist2 = self.get_distance(resource_pos, next_state)
             diff_dist = dist1-dist2
             dists.append(diff_dist)
-        print (dists)
+        # print (dists)
         max_value = max(dists)
         min_value = min(dists)
         range_values = max_value - min_value
@@ -253,7 +248,7 @@ class Mind:
         print ("------")
         self.state = self.get_next_state(self.state, action)
         self.beliefs_update(self.state)
-        U = self.value_iteration(self.state)
+        U = self.value_iteration()
         policy = self.best_policy(U)
         print (self.state)
         # print (policy)
