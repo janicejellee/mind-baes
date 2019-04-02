@@ -23,7 +23,7 @@ class Mind:
             for j in range(self.map_length):
                 self.states.append((i,j))
 
-        self.gamma = 0.9
+        self.gamma = 0.5
 
     def reward(self, state, world):
         "Return a numeric reward for this state."
@@ -246,24 +246,18 @@ class Mind:
         softmax = [j/sum_of_exps for j in exps]
         return softmax
 
-    def intents_update(self, policy):
+    def intents_update(self, action):
         "Update intents."
-
         """
             belief: [Pr(ABC), Pr(ACB), Pr(BAC), Pr(BCA), Pr(CAB), Pr(CBA)]
             state: current location on the grid
-            best_policy: the way we're going to move
-
-
-
-
+            action: action he takes
         """
 
-        # TODO get intents based on the best policy?
-        best_action = policy[self.state]
-        print (best_action)
-        next_state = self.get_next_state(self.state, best_action)
+        next_state = self.get_next_state(self.state, action)
 
+        # difference in distance that this action takes us, or how much closer or farther
+        # we get from the 3 resource locations
         dists = []
 
         for resource_pos in self.world_loc:
@@ -271,6 +265,8 @@ class Mind:
             dist2 = self.get_distance(resource_pos, next_state)
             diff_dist = dist1-dist2
             dists.append(diff_dist)
+
+        print (dists)
 
         new_intents_scores = {'A': 0, 'B': 0, 'C': 0}
 
@@ -282,7 +278,7 @@ class Mind:
                 new_intents_scores[r] += dists[i] * belief
 
         new_intents = {}
-        factor = 0.5
+        factor = 0.3
         sum_new_intents = 0
         for r in self.intents:
             new_intents[r] = max(self.intents[r] + factor * new_intents_scores[r], 0)
@@ -291,7 +287,7 @@ class Mind:
         self.intents = {'A': new_intents['A']/sum_new_intents, 'B': new_intents['B']/sum_new_intents, 'C': new_intents['C']/sum_new_intents}
 
     def receive_observation(self, action):
-        "Receive observation and get updated intents."
+        "Receive observation, update model, and get updated intents."
         print ("------")
         self.state = self.get_next_state(self.state, action)
         self.beliefs_update(self.state)
@@ -299,8 +295,7 @@ class Mind:
         # print (U)
         policy = self.best_policy(U)
         print (self.state)
-        # print (policy)
-        self.intents_update(policy)
+        self.intents_update(action)
         # print ('beliefs: ', self.beliefs)
         print ('intents: ', self.intents)
 
@@ -320,24 +315,24 @@ my_mind.receive_observation('left')
 my_mind.receive_observation('left')
 my_mind.receive_observation('left')
 
-print ("--------------")
+print ("---------------------------")
 
 # # goes to A, then C
-# my_mind = Mind()
-# my_mind.receive_observation('right')
-# my_mind.receive_observation('right')
-# my_mind.receive_observation('right')
-# my_mind.receive_observation('right')
-# my_mind.receive_observation('right')
-# my_mind.receive_observation('right')
-# my_mind.receive_observation('down')
-# my_mind.receive_observation('down')
-# my_mind.receive_observation('down')
-# my_mind.receive_observation('down')
-# my_mind.receive_observation('down')
-# my_mind.receive_observation('down')
-# my_mind.receive_observation('down')
-# my_mind.receive_observation('down')
+my_mind = Mind()
+my_mind.receive_observation('right')
+my_mind.receive_observation('right')
+my_mind.receive_observation('right')
+my_mind.receive_observation('right')
+my_mind.receive_observation('right')
+my_mind.receive_observation('right')
+my_mind.receive_observation('down')
+my_mind.receive_observation('down')
+my_mind.receive_observation('down')
+my_mind.receive_observation('down')
+my_mind.receive_observation('down')
+my_mind.receive_observation('down')
+my_mind.receive_observation('down')
+my_mind.receive_observation('down')
 
 
 print ("done")
