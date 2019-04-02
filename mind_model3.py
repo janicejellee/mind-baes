@@ -12,16 +12,9 @@ class Mind:
         # belief that the orientation is the above
         self.beliefs = [1/6, 1/6, 1/6, 1/6, 1/6, 1/6]
 
-        # self.intents = {'A': 1/3,
-        #                 'B': 1/3,
-        #                 'C': 1/3}
-
-        self.intents = {'A': 0.05,
-                        'B': 0.09,
-                        'C': 0.05}
-        # how certain we are of current state
-        epsilon_obs = 0.001
-        self.observation_distribution_prob = 1 - epsilon_obs
+        self.intents = {'A': 1/3,
+                        'B': 1/3,
+                        'C': 1/3}
 
         self.state = (0,0)
 
@@ -216,32 +209,24 @@ class Mind:
             dist2 = self.get_distance(resource_pos, next_state)
             diff_dist = dist1-dist2
             dists.append(diff_dist)
-        # print (dists)
-        max_value = max(dists)
-        min_value = min(dists)
-        range_values = max_value - min_value
 
-        for i in range(len(dists)):
-            dists[i] += range_values
-
-        # probabilities A,B,C is in location 0,1,2
-        probs = [{'A': 0, 'B': 0, 'C': 0},
-                 {'A': 0, 'B': 0, 'C': 0},
-                 {'A': 0, 'B': 0, 'C': 0}]
+        new_intents_scores = {'A': 0, 'B': 0, 'C': 0}
 
         for i in range(len(self.beliefs_worlds)):
             world = self.beliefs_worlds[i]
-            for j in range(3):
-                resource = world[j]
-                probs[j][resource] += self.beliefs[i]
+            belief = self.beliefs[i]
+            for i in range(3):
+                r = world[i]
+                new_intents_scores[r] += dists[i] * belief
 
-        scores = [0, 0, 0]
-        for i in range(3):
-            prob = probs[i]
-            scores[0] += dists[i] * prob['A']
-            scores[1] += dists[i] * prob['B']
-            scores[2] += dists[i] * prob['C']
-        self.intents = {'A': scores[0]/sum(scores), 'B': scores[1]/sum(scores), 'C': scores[2]/sum(scores)}
+        new_intents = {}
+        factor = 0.5
+        sum_new_intents = 0
+        for r in self.intents:
+            new_intents[r] = max(self.intents[r] + factor * new_intents_scores[r], 0)
+            sum_new_intents += new_intents[r]
+
+        self.intents = {'A': new_intents['A']/sum_new_intents, 'B': new_intents['B']/sum_new_intents, 'C': new_intents['C']/sum_new_intents}
 
     def receive_observation(self, action):
         "Receive observation and get updated intents."
@@ -249,6 +234,7 @@ class Mind:
         self.state = self.get_next_state(self.state, action)
         self.beliefs_update(self.state)
         U = self.value_iteration()
+        # print (U)
         policy = self.best_policy(U)
         print (self.state)
         # print (policy)
@@ -273,20 +259,23 @@ my_mind.receive_observation('left')
 my_mind.receive_observation('left')
 
 
+print ("--------------")
+
 # goes to A, then C
-# my_mind.receive_observation('right')
-# my_mind.receive_observation('right')
-# my_mind.receive_observation('right')
-# my_mind.receive_observation('right')
-# my_mind.receive_observation('right')
-# my_mind.receive_observation('right')
-# my_mind.receive_observation('down')
-# my_mind.receive_observation('down')
-# my_mind.receive_observation('down')
-# my_mind.receive_observation('down')
-# my_mind.receive_observation('down')
-# my_mind.receive_observation('down')
-# my_mind.receive_observation('down')
-# my_mind.receive_observation('down')
+my_mind = Mind()
+my_mind.receive_observation('right')
+my_mind.receive_observation('right')
+my_mind.receive_observation('right')
+my_mind.receive_observation('right')
+my_mind.receive_observation('right')
+my_mind.receive_observation('right')
+my_mind.receive_observation('down')
+my_mind.receive_observation('down')
+my_mind.receive_observation('down')
+my_mind.receive_observation('down')
+my_mind.receive_observation('down')
+my_mind.receive_observation('down')
+my_mind.receive_observation('down')
+my_mind.receive_observation('down')
 
 print ("done")
