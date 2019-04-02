@@ -120,31 +120,82 @@ class Mind:
     def beliefs_update(self, state):
         "Update beliefs"
         near_locations = self.within_range(state)
+
+        # figure out which locations you can see
+        # update beliefs for the ones close to you
+
+
+        #redistribute beliefs
+
         for loc in near_locations:
             i = self.world_loc.index(loc)
             resource = self.world_state[i]
-
-            increasing_beliefs = []
-            decreasing_beliefs = []
+            print ("observed resource %s" % resource)
+            consistently_observed_worlds = []
+            inconsistently_observed_worlds = []
             for j in range(len(self.beliefs_worlds)):
                 world = self.beliefs_worlds[j]
                 if world[i] == resource:
-                    increasing_beliefs.append(j)
+                    consistently_observed_worlds.append(j)
                 else:
-                    decreasing_beliefs.append(j)
+                    inconsistently_observed_worlds.append(j)
+            factor = len(consistently_observed_worlds)
+            sum_of_consistently_observed = sum([self.beliefs[i] for i in consistently_observed_worlds])
+            sum_of_inconsistently_observed = sum([self.beliefs[i] for i in inconsistently_observed_worlds])
+            for i in range(len(self.beliefs)):
+                if i in consistently_observed_worlds:
+                    self.beliefs[i] = 0.9 * self.beliefs[i]/sum_of_consistently_observed
+                else:
+                    self.beliefs[i] = 0.1 * self.beliefs[i]/sum_of_inconsistently_observed
 
-            # increase belief in worlds
-            sum_increase_beliefs = 0
-            for b in increasing_beliefs:
-                self.beliefs[b] *= 2
-                sum_increase_beliefs += self.beliefs[b]
-            # print ("increasing ", increasing_beliefs)
+            self.beliefs = [float(i)/sum(self.beliefs) for i in self.beliefs]
+            print("new beliefs %s " % self.beliefs)
 
-        new_beliefs = []
-        for b in self.beliefs:
-            new_beliefs.append(b/sum(self.beliefs))
+        #
+        #
+        #
+        # for loc in near_locations:
+        #     i = self.world_loc.index(loc)
+        #     resource = self.world_state[i]
+        #
+        #     increasing_beliefs = []
+        #     decreasing_beliefs = []
+        #     for j in range(len(self.beliefs_worlds)):
+        #         world = self.beliefs_worlds[j]
+        #         if world[i] == resource:
+        #             increasing_beliefs.append(j)
+        #         else:
+        #             decreasing_beliefs.append(j)
+        #
+        #     # increase belief in worlds
+        #     sum_increase_beliefs = 0
+        #     for b in increasing_beliefs:
+        #         self.beliefs[b] *= 2
+        #         sum_increase_beliefs += self.beliefs[b]
+        #     # print ("increasing ", increasing_beliefs)
+        #
+        # new_beliefs = []
+        # for b in self.beliefs:
+        #     new_beliefs.append(b/sum(self.beliefs))
+        #
+        # self.beliefs = new_beliefs
 
-        self.beliefs = new_beliefs
+
+        ''' 90% accuracy
+        ABC    ACB   BCA BAC  CBA  CAB
+        [1/6, 1/6, 1/6, 1/6, 1/6, 1/6]
+        observe A in loc 1
+        [.45, .45, 0.025, 0.025, 0.025, 0.025]
+        observe C in loc 2
+
+        normalize????
+
+        [ 0.45 * 0.1/4 , .9 * 45./47.5, 0.9 * 2.5/47.5, 0.025 * 0.1/4, 0.025 * 0.1/4, 0.025 * 0.1/4]
+
+
+
+
+        '''
 
     def value_iteration(self, epsilon=0.001):
         "Solving by value iteration."
@@ -197,6 +248,17 @@ class Mind:
 
     def intents_update(self, policy):
         "Update intents."
+
+        """
+            belief: [Pr(ABC), Pr(ACB), Pr(BAC), Pr(BCA), Pr(CAB), Pr(CBA)]
+            state: current location on the grid
+            best_policy: the way we're going to move
+
+
+
+
+        """
+
         # TODO get intents based on the best policy?
         best_action = policy[self.state]
         print (best_action)
@@ -258,24 +320,24 @@ my_mind.receive_observation('left')
 my_mind.receive_observation('left')
 my_mind.receive_observation('left')
 
-
 print ("--------------")
 
-# goes to A, then C
-my_mind = Mind()
-my_mind.receive_observation('right')
-my_mind.receive_observation('right')
-my_mind.receive_observation('right')
-my_mind.receive_observation('right')
-my_mind.receive_observation('right')
-my_mind.receive_observation('right')
-my_mind.receive_observation('down')
-my_mind.receive_observation('down')
-my_mind.receive_observation('down')
-my_mind.receive_observation('down')
-my_mind.receive_observation('down')
-my_mind.receive_observation('down')
-my_mind.receive_observation('down')
-my_mind.receive_observation('down')
+# # goes to A, then C
+# my_mind = Mind()
+# my_mind.receive_observation('right')
+# my_mind.receive_observation('right')
+# my_mind.receive_observation('right')
+# my_mind.receive_observation('right')
+# my_mind.receive_observation('right')
+# my_mind.receive_observation('right')
+# my_mind.receive_observation('down')
+# my_mind.receive_observation('down')
+# my_mind.receive_observation('down')
+# my_mind.receive_observation('down')
+# my_mind.receive_observation('down')
+# my_mind.receive_observation('down')
+# my_mind.receive_observation('down')
+# my_mind.receive_observation('down')
+
 
 print ("done")
