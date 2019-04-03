@@ -46,8 +46,8 @@ def dptable(V):
 
 
 states = ('A', 'B', 'C')
-obs = ('Pass', 'Pass', 'Pass', 'Pass', 'Collect', 'Pass', 'Collect', 'Pass')
-start_p = {'A': 0.34, 'B': 0.33, 'C': 0.33}
+obs = ('Pass', 'Pass', 'Pass', 'Mark', 'Collect', 'Pass', 'Mark', 'Pass')
+start_p = {'A': 0.1, 'B': 0.3, 'C': 0.6}
 trans_p = {
     'A' : {'A': 0.3, 'B': 0.3, 'C': 0.4},
     'B' : {'A': 0.2, 'B': 0.5, 'C': 0.3},
@@ -55,21 +55,10 @@ trans_p = {
     }
  
 emit_p = {
-    'A' : {'Collect': 0.2, 'Pass': 0.8},
-    'B' : {'Collect': 0.4, 'Pass': 0.6},
-    'C' : {'Collect': 0.7, 'Pass': 0.3},
+    'A' : {'Collect': 0.1, 'Mark':0.1, 'Pass': 0.8},
+    'B' : {'Collect': 0.2, 'Mark':0.4, 'Pass': 0.4},
+    'C' : {'Collect': 0.5, 'Mark':0.3, 'Pass': 0.2},
     }
 
-##obs = ('normal', 'cold', 'dizzy')
-##states = ('Healthy', 'Fever')
-##start_p = {'Healthy': 0.6, 'Fever': 0.4}
-##trans_p = {
-##   'Healthy' : {'Healthy': 0.7, 'Fever': 0.3},
-##   'Fever' : {'Healthy': 0.4, 'Fever': 0.6}
-##   }
-##emit_p = {
-##   'Healthy' : {'normal': 0.5, 'cold': 0.4, 'dizzy': 0.1},
-##   'Fever' : {'normal': 0.1, 'cold': 0.3, 'dizzy': 0.6}
-##   }
 
 viterbi(obs, states, start_p, trans_p, emit_p)
